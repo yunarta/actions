@@ -1,0 +1,24 @@
+name: Az login
+description: Do az login
+inputs:
+  subscription:
+    description: Subscription number
+    required: true
+
+outputs:
+  access_token:
+    value: ${{ steps.login.outputs.access-token }}
+
+runs:
+  using: 'composite'
+  image: yunarta/azure-action-container:latest
+  steps:
+    - name: Login
+      id: login
+      run: |
+        set -e
+        az login --service-principal -u ${{ vars.CLIENT_ID }} -p ${{ secrets.CLIENT_SECRET }} --tenant ${{ vars.TENANT }} > /dev/null
+        az account set --subscription ${{ inputs.subscription }}
+        ACCESS_TOKEN=$(az account get-access-token --query accessToken --output tsv)
+        
+        echo "access-token=$(echo $ACCESS_TOKEN)" >> $GITHUB_OUTPUT
