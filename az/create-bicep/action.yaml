@@ -33,6 +33,7 @@ runs:
         
         ${{ inputs.parameters }}
         EOF
+        cat ${name}.bicepparam
 
     - name: Create Bicep
       shell: bash
