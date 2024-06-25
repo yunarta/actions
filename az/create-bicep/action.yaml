@@ -1,0 +1,61 @@
+name: Create Bicep
+description: Create Bicep in target subscription
+inputs:
+  subscription:
+    description: Subscription number
+    required: true
+
+  scope:
+    description: Deployment scope, default to 'group' if omitted
+    default: group
+
+  name:
+    description: Deployment name
+
+  file:
+    description: Template file
+
+  resource-group:
+    description: Resource group
+
+  parameters:
+    description: additional parameters
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Create param file
+      shell: bash
+      run: |
+        name=$(echo '${{ inputs.file }}' | sha1sum | awk '{print $1}')
+        cat > ${name}.bicepparam << EOF
+        using './${{ inputs.file }}'
+        
+        ${{ inputs.parameters }}
+        EOF
+
+    - name: Create Bicep
+      shell: bash
+      run: |
+        name="$(echo '${{ inputs.file }}' | sha1sum | awk '{print $1}')"
+        
+        set -x
+        if [ '${{ inputs.scope }}' == 'group' ]; then
+           az stack group create \
+            --name '${{ inputs.name }}' \
+            --resource-group '${{ inputs.resource-group }}' \
+            --template-file '${{ inputs.file }}' \
+            --parameters ${name}.bicepparam \
+            --action-on-unmanage 'DeleteAll' \
+            --deny-settings-mode 'none' \
+            --yes
+        else
+           az stack sub create \
+            --location ${{ env.AZURE_LOCATION }} \
+            --name '${{ inputs.name }}' \
+            --template-file '${{ inputs.file }}' \
+            --parameters ${name}.bicepparam \
+            --action-on-unmanage 'DeleteAll' \
+            --deny-settings-mode 'none' \
+            --yes
+        fi
