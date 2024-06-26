@@ -15,7 +15,7 @@ runs:
   using: 'composite'
   steps:
     - name: Login
-      id: login
+      shell: bash
       run: |
         set -e
         az login --service-principal -u ${{ inputs.client-id }} -p ${{ inputs.client-secret }} --tenant ${{ inputs.tenant-id }} > /dev/null
